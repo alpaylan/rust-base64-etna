@@ -299,6 +299,8 @@ pub use crate::decode::{decode_engine_slice, decoded_len_estimate, DecodeError, 
 
 pub mod prelude;
 
+pub mod etna;
+
 #[cfg(test)]
 mod tests;
 

@@ -34,6 +34,15 @@ required-features = ["alloc"]
 [package.metadata.docs.rs]
 rustdoc-args = ["--generate-link-to-definition"]
 
+[dependencies]
+# ETNA framework dependencies — linked by src/bin/etna.rs. Kept as required
+# deps (not dev-deps) so the bin target can reach them.
+proptest = "1.11.0"
+quickcheck_etna = { path = "/Users/akeles/Programming/projects/PbtBenchmark/quickcheck", package = "quickcheck", features = ["etna"] }
+crabcheck = { path = "/Users/akeles/Programming/projects/PbtBenchmark/crabcheck" }
+hegeltest = "0.3.7"
+rand = "0.9"
+
 [dev-dependencies]
 criterion = "0.4.0"
 rand = { version = "0.8.5", features = ["small_rng"] }
@@ -44,6 +53,10 @@ strum = { version = "0.25", features = ["derive"] }
 # test fixtures for engine tests
 rstest = "0.13.0"
 rstest_reuse = "0.6.0"
+
+[[bin]]
+name = "etna"
+path = "src/bin/etna.rs"
 
 [features]
 default = ["std"]

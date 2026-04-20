@@ -4,6 +4,10 @@ target/
 *.swo
 main.rs
 
+# ETNA runtime artifacts
+progress.jsonl
+.hegel/
+
 # JetBrains tools
 .idea
 *.iml
