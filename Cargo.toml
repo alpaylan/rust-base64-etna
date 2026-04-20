@@ -41,7 +41,9 @@ proptest = "1.11.0"
 quickcheck_etna = { path = "/Users/akeles/Programming/projects/PbtBenchmark/quickcheck", package = "quickcheck", features = ["etna"] }
 crabcheck = { path = "/Users/akeles/Programming/projects/PbtBenchmark/crabcheck" }
 hegeltest = "0.3.7"
-rand = "0.9"
+# Renamed to avoid colliding with dev-deps rand 0.8 that the crate's own tests
+# and benches still use (they use rand 0.8 APIs extensively).
+rand_etna = { package = "rand", version = "0.9" }
 
 [dev-dependencies]
 criterion = "0.4.0"

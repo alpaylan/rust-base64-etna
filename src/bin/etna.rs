@@ -17,7 +17,7 @@ use hegel::{generators as hgen, HealthCheck, Hegel, Settings as HegelSettings, T
 use proptest::prelude::*;
 use proptest::test_runner::{Config as ProptestConfig, TestCaseError, TestError, TestRunner};
 use quickcheck_etna::{Arbitrary as QcArbitrary, Gen, QuickCheck, ResultStatus, TestResult};
-use rand::Rng;
+use rand_etna::Rng;
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
