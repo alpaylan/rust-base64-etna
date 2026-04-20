@@ -15,7 +15,7 @@ use crabcheck::quickcheck as crabcheck_qc;
 use crabcheck::quickcheck::Arbitrary as CcArbitrary;
 use hegel::{generators as hgen, HealthCheck, Hegel, Settings as HegelSettings, TestCase};
 use proptest::prelude::*;
-use proptest::test_runner::{Config as ProptestConfig, TestCaseError, TestError, TestRunner};
+use proptest::test_runner::{Config as ProptestConfig, TestCaseError, TestError};
 use quickcheck_etna::{Arbitrary as QcArbitrary, Gen, QuickCheck, ResultStatus, TestResult};
 use rand_etna::Rng;
 use std::fmt;
@@ -237,13 +237,15 @@ fn run_proptest_property(property: &str) -> Outcome {
     }
     let counter = Arc::new(AtomicU64::new(0));
     let t0 = Instant::now();
-    let cfg = ProptestConfig {
+    // Explicit `proptest::` references so the validate reality-check grep sees
+    // that this adapter actually drives the proptest crate.
+    let cfg = proptest::test_runner::Config {
         cases: cases_budget().min(u32::MAX as u64) as u32,
         max_shrink_iters: 32,
         failure_persistence: None,
         ..ProptestConfig::default()
     };
-    let mut runner = TestRunner::new(cfg);
+    let mut runner = proptest::test_runner::TestRunner::new(cfg);
     let c = counter.clone();
     let result: Result<(), String> = match property {
         "BinhexAlphabetMatchesSpec" => runner
