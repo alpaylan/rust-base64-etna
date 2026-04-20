@@ -1,0 +1,15 @@
+diff --git a/src/engine/general_purpose/decode.rs b/src/engine/general_purpose/decode.rs
+--- a/src/engine/general_purpose/decode.rs
++++ b/src/engine/general_purpose/decode.rs
+@@ -15,7 +15,10 @@ impl GeneralPurposeEstimate {
+         let rem = encoded_len % 4;
+         Self {
+             rem,
+-            conservative_decoded_len: (encoded_len / 4 + usize::from(rem > 0)) * 3,
++            conservative_decoded_len: encoded_len
++                .checked_add(3)
++                .expect("Overflow when calculating decoded len estimate")
++                / 4 * 3,
+         }
+     }
+ }
