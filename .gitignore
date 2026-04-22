@@ -7,6 +7,9 @@ main.rs
 # ETNA runtime artifacts
 progress.jsonl
 .hegel/
+.marauders/
+.migration-cache/
+etna.log
 
 # JetBrains tools
 .idea

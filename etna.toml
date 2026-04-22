@@ -1,52 +1,67 @@
-# ETNA workload index for rust-base64.
-#
-# One [[variant]] per injected mutation. Source of truth for variant -> property
-# mapping. Every other fact is derivable from the source tree:
-#   - ls patches/*.patch                       (patch-based variants)
-#   - grep -rn "pub fn property_" src/etna.rs  (property functions)
-#   - grep -rn "fn witness_.*_case_" tests/    (witness tests)
-#
-# Base commit for this workload is HEAD of master on this tree. Every
-# etna/<variant> branch is master + exactly one patch applied on top.
-#
-# Candidates scanned but not chosen:
-# - Pre-engine refactor commits (before ~2022) touch APIs that no longer
-#   exist (free-function `encode_config`/`decode_config`, `Config` struct,
-#   `DecoderReader::new_with_config`, etc.). The post-refactor surface
-#   (`Engine`, `GeneralPurpose`, `Alphabet::new`) is what downstream actually
-#   calls, so mutations against deleted types are terminally inexpressible.
-# - `afd5dd29` ("Fix panic when decoding last symbol"): already covered by
-#   extensive unit tests on InvalidLastSymbol; mutation would duplicate an
-#   existing deterministic test rather than exercise a PBT invariant.
-# - Encoder/decoder SIMD path fixes: the property "encode(decode(x)) == x"
-#   is already asserted heavily in the crate's own tests; adding a PBT
-#   wrapper would be redundant with minimal additional signal.
-
 name = "rust-base64"
-language = "Rust"
+language = "rust"
+crate = "base64"
+base_commit = "bb628c3765c415c9c43c6becc372a6872764581c"
 
-[[variant]]
-name = "binhex_alphabet_838355e_1"
-property = "BinhexAlphabetMatchesSpec"
-injection = "patch"
-patch = "patches/binhex_alphabet_838355e_1.patch"
-source_commit = "838355e0ac5fb8237ec9b96be5edb011bff00275"
-witnesses = [
-    "witness_binhex_alphabet_matches_spec_case_hello_world",
-    "witness_binhex_alphabet_matches_spec_case_full_range",
-]
-frameworks = ["proptest", "quickcheck", "crabcheck", "hegel"]
+[[tasks]]
+mutations = ["binhex_alphabet_838355e_1"]
+
+[tasks.source]
+repo = "https://github.com/marshallpierce/rust-base64"
+commits = ["838355e0ac5fb8237ec9b96be5edb011bff00275"]
+commit_subjects = ["Correct BinHex 4.0 alphabet according to specifications"]
+prs = [271]
+summary = "The `alphabet::BIN_HEX` literal misspelled the BinHex 4.0 alphabet — it included `7` and omitted `f` where the spec is the other way around. The fix replaces the literal with the correct 64-character set, so any encode/decode traversing indices 7–10 or 37–40 now matches the reference alphabet."
+
+[tasks.injection]
+kind = "patch"
 files = ["src/alphabet.rs"]
+locations = [{ file = "src/alphabet.rs" }]
+patch = "patches/binhex_alphabet_838355e_1.patch"
 
-[[variant]]
-name = "decoded_len_overflow_fa47981_1"
-property = "DecodedLenEstimateDoesNotPanic"
-injection = "patch"
-patch = "patches/decoded_len_overflow_fa47981_1.patch"
-source_commit = "fa47981fd791467183e4c61112b848095aab21ac"
+[tasks.bug]
+short_name = "binhex_alphabet"
+invariant = "The crate's `BIN_HEX` constant must match the [BinHex 4.0 spec alphabet](http://files.stairways.com/other/binhex-40-specs-info.txt) — specifically, the 64-character set containing `f` and omitting `7`. The property encodes the same input under both `alphabet::BIN_HEX` and a freshly-constructed `Alphabet::new(BINHEX_SPEC)` and demands byte-for-byte equality."
+how_triggered = "The buggy literal contains `3456789` and `abcdeh` where the spec has `345689` and `abcdefh` — effectively swapping `7` in place of `f`. Any input byte whose base64 lookup traverses one of the disagreeing table indices (7, 8, 9, 10, 37, 38, 39, 40) encodes to a different character under the crate alphabet than under the spec alphabet. The property sees the mismatched bytes and fails."
+
+[[tasks.tasks]]
+property = "BinhexAlphabetMatchesSpec"
 witnesses = [
-    "witness_decoded_len_estimate_does_not_panic_case_usize_max",
-    "witness_decoded_len_estimate_does_not_panic_case_near_max",
+  { test_fn = "witness_binhex_alphabet_matches_spec_case_hello_world" },
+  { test_fn = "witness_binhex_alphabet_matches_spec_case_full_range" },
 ]
-frameworks = ["proptest", "quickcheck", "crabcheck", "hegel"]
+
+[[tasks]]
+mutations = ["decoded_len_overflow_fa47981_1"]
+
+[tasks.source]
+repo = "https://github.com/marshallpierce/rust-base64"
+commits = ["fa47981fd791467183e4c61112b848095aab21ac"]
+commit_subjects = ["Switch to non-overflowing decoded length formula"]
+prs = [217]
+summary = "`GeneralPurposeEstimate::new` computed `encoded_len.checked_add(3).expect(\"Overflow when calculating decoded len estimate\")`, panicking on any `encoded_len > usize::MAX - 3`. The fix switches to a non-overflowing formula so `base64::decoded_len_estimate` is total over its declared `usize` domain."
+
+[tasks.injection]
+kind = "patch"
 files = ["src/engine/general_purpose/decode.rs"]
+locations = [{ file = "src/engine/general_purpose/decode.rs" }]
+patch = "patches/decoded_len_overflow_fa47981_1.patch"
+
+[tasks.bug]
+short_name = "decoded_len_overflow"
+invariant = "`base64::decoded_len_estimate` is a public function whose argument is `usize`. It must be total on its declared input domain — returning a value for every `usize` input, never panicking. The estimator's job is size-hinting for downstream `Vec::with_capacity`-style calls; a panic here is a crash on advertised public-API input."
+how_triggered = """
+The buggy constructor uses `encoded_len.checked_add(3).expect("Overflow when calculating decoded len estimate")`. When `encoded_len > usize::MAX - 3` (i.e., `usize::MAX`, `usize::MAX - 1`, `usize::MAX - 2`), `checked_add(3)` returns `None` and `.expect` panics. The property wraps the call in `std::panic::catch_unwind` and reports the panic as a failure.
+"""
+
+[[tasks.tasks]]
+property = "DecodedLenEstimateDoesNotPanic"
+witnesses = [
+  { test_fn = "witness_decoded_len_estimate_does_not_panic_case_usize_max" },
+  { test_fn = "witness_decoded_len_estimate_does_not_panic_case_near_max" },
+]
+
+[[dropped]]
+commit = "afd5dd29"
+subject = "Fix panic when decoding last symbol"
+reason = "Already covered by deterministic unit tests in `src/engine/tests.rs` on InvalidLastSymbol — a PBT wrapper would duplicate an existing unit test rather than exercise a distinct invariant."
