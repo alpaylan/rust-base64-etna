@@ -1,5 +1,6 @@
 name = "rust-base64"
 language = "rust"
+strategies = ["proptest", "quickcheck", "crabcheck", "hegel"]
 crate = "base64"
 base_commit = "bb628c3765c415c9c43c6becc372a6872764581c"
 

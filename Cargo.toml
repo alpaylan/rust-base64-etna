@@ -38,8 +38,8 @@ rustdoc-args = ["--generate-link-to-definition"]
 # ETNA framework dependencies — linked by src/bin/etna.rs. Kept as required
 # deps (not dev-deps) so the bin target can reach them.
 proptest = "1.11.0"
-quickcheck_etna = { path = "/Users/akeles/Programming/projects/PbtBenchmark/quickcheck", package = "quickcheck", features = ["etna"] }
-crabcheck = { path = "/Users/akeles/Programming/projects/PbtBenchmark/crabcheck" }
+quickcheck_etna = { git = "https://github.com/alpaylan/quickcheck.git", branch = "master", package = "quickcheck", features = ["etna"] }
+crabcheck = { git = "https://github.com/alpaylan/crabcheck.git", branch = "main" }
 hegeltest = "0.3.7"
 # Renamed to avoid colliding with dev-deps rand 0.8 that the crate's own tests
 # and benches still use (they use rand 0.8 APIs extensively).
