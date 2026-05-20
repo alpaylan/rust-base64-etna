@@ -60,6 +60,10 @@ rstest_reuse = "0.6.0"
 name = "etna"
 path = "src/bin/etna.rs"
 
+[[bin]]
+name = "etna-faultloc"
+path = "src/bin/etna-faultloc.rs"
+
 [features]
 default = ["std"]
 alloc = []
